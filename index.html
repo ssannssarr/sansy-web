@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sansy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000000;
+            color: #ffffff;
+            -webkit-font-smoothing: antialiased;
+            overflow: hidden;
+            touch-action: manipulation;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .glass-pill {
+            background: rgba(15, 15, 20, 0.85); 
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        .active-nav-item i { filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6)); color: #ffffff; }
+        .active-nav-item span { text-shadow: 0 0 10px rgba(255, 255, 255, 0.4); color: #ffffff; }
+        .inactive-nav-item { color: #444444; }
+
+        .sidebar-transition { transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+        .full-player-transition { transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1); }
+
+        @keyframes rotate-disk { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .playing-disk { animation: rotate-disk 8s linear infinite; }
+        .playing-disk.paused { animation-play-state: paused; }
+
+        .progress-bar { height: 4px; background: rgba(255, 255, 255, 0.08); border-radius: 2px; }
+        .progress-fill { height: 100%; background: #ffffff; width: 35%; box-shadow: 0 0 10px rgba(255, 255, 255, 0.3); }
+
+        #content-area::-webkit-scrollbar { width: 0px; }
+
+        .video-container { transition: all 0.4s cubic-bezier(0.32, 0.72, 0, 1); }
+        .video-container.fullscreen-active {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            border-radius: 0; border-color: transparent; z-index: 100; background: #000;
+        }
+
+        .tap-highlight-none { -webkit-tap-highlight-color: transparent; outline: none; }
+        
+        /* Toggle Switch */
+        .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #222; transition: .4s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #ffffff; }
+        input:checked + .slider:before { transform: translateX(20px); background-color: #000; }
+    </style>
+</head>
+<body class="flex flex-col select-none">
+
+    <!-- Sidebar Overlay -->
+    <div id="sidebar-overlay" class="fixed inset-0 z-[80] bg-black/60 backdrop-blur-md opacity-0 pointer-events-none transition-opacity duration-500" onclick="App.toggleSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed top-0 left-0 bottom-0 w-72 bg-black/95 border-r border-white/5 z-[90] sidebar-transition -translate-x-full p-8 flex flex-col">
+        <button onclick="App.toggleSidebar()" class="tap-highlight-none mb-12 text-left">
+            <h1 class="text-2xl font-black tracking-tighter uppercase italic text-white">Sansy</h1>
+        </button>
+        <nav class="space-y-8">
+            <div class="space-y-4">
+                <p class="text-[10px] uppercase tracking-[0.2em] text-zinc-600 font-bold">Menu</p>
+                <button onclick="App.setView('library'); App.toggleSidebar();" class="flex items-center gap-4 text-zinc-100 w-full tap-highlight-none">
+                    <i data-lucide="heart" class="w-5 h-5 text-white"></i>
+                    <span class="font-semibold">Liked Songs</span>
+                </button>
+                <button onclick="App.setView('settings'); App.toggleSidebar();" class="flex items-center gap-4 text-zinc-400 hover:text-white w-full tap-highlight-none">
+                    <i data-lucide="settings" class="w-5 h-5"></i>
+                    <span>Settings</span>
+                </button>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- Full Video Player -->
+    <div id="full-player" class="fixed inset-0 z-[60] bg-black full-player-transition translate-y-full flex flex-col overflow-hidden">
+        
+        <!-- Header -->
+        <div class="p-6 flex items-center justify-between">
+            <button onclick="App.toggleFullPlayer()" class="p-2 glass-pill rounded-full tap-highlight-none">
+                <i data-lucide="chevron-down" class="w-6 h-6 text-white"></i>
+            </button>
+            <p class="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">Now Playing</p>
+            <div class="relative">
+                <button onclick="App.toggleOptionsMenu(event)" class="p-2 tap-highlight-none">
+                    <i data-lucide="more-vertical" class="w-5 h-5 text-white"></i>
+                </button>
+                <!-- Menu Container -->
+                <div id="options-menu" class="absolute right-0 top-12 glass-pill p-2 rounded-2xl w-56 opacity-0 pointer-events-none scale-95 z-[70] transition-all duration-200" 
+                    onclick="event.stopPropagation()" 
+                    ontouchstart="event.stopPropagation()">
+                    <div id="menu-content"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Video Display -->
+        <div class="flex-1 flex items-center justify-center px-6 relative">
+            <div id="video-frame" class="w-full aspect-video bg-zinc-900 rounded-2xl border border-white/10 overflow-hidden relative shadow-2xl flex items-center justify-center video-container">
+                <i data-lucide="clapperboard" class="w-12 h-12 text-white/10"></i>
+                <button onclick="App.toggleFullscreen(event)" class="absolute bottom-3 left-3 p-2 bg-black/50 backdrop-blur-md rounded-lg text-white/70 tap-highlight-none">
+                    <i id="fs-icon" data-lucide="maximize" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Info & Controls -->
+        <div class="pb-12 px-8 space-y-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-2xl font-bold tracking-tight mb-1" id="player-title">No Track Selected</h2>
+                    <p class="text-zinc-400 text-sm" id="player-artist">Tap a song to play</p>
+                </div>
+                <button onclick="App.Library.toggleLike(event)" class="p-3 bg-zinc-800/50 rounded-full border border-white/10 tap-highlight-none">
+                    <i id="like-icon" data-lucide="plus" class="w-5 h-5 text-zinc-300"></i>
+                </button>
+            </div>
+
+            <div class="space-y-2">
+                <div class="progress-bar"><div class="progress-fill"></div></div>
+                <div class="flex justify-between text-[10px] font-medium text-zinc-500">
+                    <span>1:24</span><span>4:03</span>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-center gap-8 px-4">
+                <button class="text-white tap-highlight-none" onclick="event.stopPropagation()"><i data-lucide="skip-back" class="w-8 h-8 fill-current"></i></button>
+                <button onclick="App.togglePlay(event)" class="h-20 w-20 bg-white text-black rounded-full flex items-center justify-center shadow-xl tap-highlight-none transition-transform active:scale-95">
+                    <i id="full-play-icon" data-lucide="pause" class="w-10 h-10 fill-current ml-1"></i>
+                </button>
+                <button class="text-white tap-highlight-none" onclick="event.stopPropagation()"><i data-lucide="skip-forward" class="w-8 h-8 fill-current"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main View -->
+    <main class="flex-1 flex flex-col relative overflow-hidden">
+        <header class="h-20 flex items-center justify-between px-6 z-10">
+            <button onclick="App.toggleSidebar()" class="tap-highlight-none">
+                <h1 class="text-2xl font-black tracking-tighter uppercase italic">Sansy</h1>
+            </button>
+        </header>
+        <div id="content-area" class="flex-1 w-full px-6 pb-32">
+            <div id="view-container" class="w-full h-full"></div>
+        </div>
+    </main>
+
+    <!-- Bottom Nav -->
+    <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3">
+        <button onclick="App.handleDiscClick(event)" class="h-12 w-12 glass-pill rounded-full flex items-center justify-center overflow-hidden border border-white/10 active:scale-90 transition-transform tap-highlight-none">
+            <div id="disk-art" class="playing-disk w-full h-full p-1.5 opacity-90">
+                <img src="https://placehold.co/100x100/111/ffffff?text=V" alt="Art" class="w-full h-full object-cover rounded-full">
+            </div>
+        </button>
+        <nav class="glass-pill px-2 py-1 rounded-full flex items-center justify-around w-60 h-12">
+            <button onclick="App.setView('home')" id="nav-home" class="flex-1 flex flex-col items-center justify-center gap-0.5 active-nav-item tap-highlight-none">
+                <i data-lucide="home" class="w-4 h-4"></i>
+                <span class="text-[9px] font-bold tracking-wider uppercase">Home</span>
+            </button>
+            <button onclick="App.setView('search')" id="nav-search" class="flex-1 flex flex-col items-center justify-center gap-0.5 inactive-nav-item tap-highlight-none">
+                <i data-lucide="search" class="w-4 h-4"></i>
+                <span class="text-[9px] font-bold tracking-wider uppercase">Search</span>
+            </button>
+            <button onclick="App.setView('library')" id="nav-library" class="flex-1 flex flex-col items-center justify-center gap-0.5 inactive-nav-item tap-highlight-none">
+                <i data-lucide="library" class="w-4 h-4"></i>
+                <span class="text-[9px] font-bold tracking-wider uppercase">Library</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Feedback Layer -->
+    <div id="gesture-feedback" class="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none opacity-0 transition-opacity">
+        <div class="bg-black/60 backdrop-blur-md p-6 rounded-full text-white">
+            <i id="gesture-icon" data-lucide="check" class="w-10 h-10"></i>
+        </div>
+    </div>
+
+    <script>
+        const App = {
+            state: {
+                isSidebarOpen: false,
+                isFullPlayerOpen: false,
+                isPlaying: true,
+                currentView: 'home',
+                isOptionsMenuOpen: false,
+                isFullscreen: false,
+                menuView: 'main',
+                currentTrack: { id: 'm83', title: 'Midnight City', artist: 'M83' },
+                discClickCount: 0,
+                discClickTimer: null,
+                settings: {
+                    highQuality: true,
+                    dataSaver: false,
+                    sleepTimer: 0, // 0 = off, 1 = 15m, 2 = 30m, 3 = 60m
+                    theme: 'white'
+                }
+            },
+
+            init() {
+                this.Library.init();
+                this.Gestures.init();
+                this.setView('home');
+                window.addEventListener('click', (e) => {
+                    if (this.state.isOptionsMenuOpen && !e.target.closest('#options-menu') && !e.target.closest('[onclick*="toggleOptionsMenu"]')) {
+                        this.state.isOptionsMenuOpen = false;
+                        this.updateUI();
+                    }
+                });
+            },
+
+            handleDiscClick(event) {
+                if (event) event.stopPropagation();
+                this.state.discClickCount++;
+                if (this.state.discClickCount === 1) {
+                    this.state.discClickTimer = setTimeout(() => {
+                        this.toggleFullPlayer();
+                        this.state.discClickCount = 0;
+                    }, 250);
+                } else if (this.state.discClickCount === 2) {
+                    clearTimeout(this.state.discClickTimer);
+                    this.togglePlay(event);
+                    this.state.discClickCount = 0;
+                }
+            },
+
+            toggleSidebar() {
+                this.state.isSidebarOpen = !this.state.isSidebarOpen;
+                document.getElementById('sidebar').classList.toggle('-translate-x-full', !this.state.isSidebarOpen);
+                const overlay = document.getElementById('sidebar-overlay');
+                overlay.classList.toggle('opacity-0', !this.state.isSidebarOpen);
+                overlay.classList.toggle('pointer-events-none', !this.state.isSidebarOpen);
+            },
+
+            toggleFullPlayer() {
+                this.state.isFullPlayerOpen = !this.state.isFullPlayerOpen;
+                const player = document.getElementById('full-player');
+                player.style.transform = '';
+                
+                if (this.state.isFullPlayerOpen) {
+                    player.classList.remove('translate-y-full');
+                    player.classList.add('translate-y-0');
+                } else {
+                    player.classList.add('translate-y-full');
+                    player.classList.remove('translate-y-0');
+                    this.state.isOptionsMenuOpen = false;
+                    if(this.state.isFullscreen) this.toggleFullscreen();
+                }
+                this.updateUI();
+            },
+
+            playTrack(id, title, artist, streamUrl = null) {
+                this.state.currentTrack = { id, title, artist };
+                document.getElementById('player-title').innerText = title;
+                document.getElementById('player-artist').innerText = artist;
+                this.state.isPlaying = true;
+
+                // Audio element — create once, reuse
+                if (!this._audio) {
+                    this._audio = new Audio();
+                    this._audio.preload = "auto";
+                }
+                if (streamUrl) {
+                    this._audio.src = streamUrl;
+                    this._audio.play().catch(e => console.warn("Playback blocked:", e));
+                }
+
+                if (!this.state.isFullPlayerOpen) this.toggleFullPlayer();
+                else this.updateUI();
+            },
+
+            togglePlay(event) {
+                if (event) event.stopPropagation();
+                this.state.isPlaying = !this.state.isPlaying;
+                if (this._audio) {
+                    this.state.isPlaying ? this._audio.play() : this._audio.pause();
+                }
+                this.updateUI();
+            },
+
+            toggleOptionsMenu(event) {
+                if (event) event.stopPropagation();
+                this.state.isOptionsMenuOpen = !this.state.isOptionsMenuOpen;
+                this.state.menuView = 'main';
+                this.updateUI();
+            },
+
+            setMenuView(view, event) {
+                if (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                this.state.menuView = view;
+                this.renderOptionsMenu();
+            },
+
+            renderOptionsMenu() {
+                const container = document.getElementById('menu-content');
+                if (!container) return;
+                let html = '';
+                const backBtn = `<button onclick="App.setMenuView('main', event)" ontouchstart="App.setMenuView('main', event)" class="w-full flex items-center gap-2 p-2 text-[10px] font-bold text-zinc-500"><i data-lucide="chevron-left" class="w-3 h-3"></i> BACK</button><div class="h-px bg-white/10 mb-1"></div>`;
+                
+                const itemClass = "w-full flex items-center gap-3 p-3 text-sm font-semibold hover:bg-white/10 rounded-xl transition-colors tap-highlight-none";
+
+                if (this.state.menuView === 'audio') {
+                    html = backBtn + `
+                        <button class="${itemClass}" onclick="App.selectQuality('320k', event)" ontouchstart="App.selectQuality('320k', event)">320kbps <span class="text-[9px] text-zinc-500 ml-auto">HIGH</span></button>
+                        <button class="${itemClass}" onclick="App.selectQuality('128k', event)" ontouchstart="App.selectQuality('128k', event)">128kbps</button>`;
+                } else if (this.state.menuView === 'video') {
+                    html = backBtn + `
+                        <button class="${itemClass} text-white" onclick="App.selectQuality('1080p', event)" ontouchstart="App.selectQuality('1080p', event)">1080p <span class="text-[9px] ml-auto">HD</span></button>
+                        <button class="${itemClass}" onclick="App.selectQuality('720p', event)" ontouchstart="App.selectQuality('720p', event)">720p</button>
+                        <button class="${itemClass}" onclick="App.selectQuality('480p', event)" ontouchstart="App.selectQuality('480p', event)">480p</button>`;
+                } else if (this.state.menuView === 'download') {
+                    html = backBtn + `
+                        <p class="text-[9px] text-zinc-600 px-3 font-black uppercase tracking-widest py-1">Audio (MP3)</p>
+                        <button class="${itemClass}" onclick="App.selectQuality('DL-320k', event)" ontouchstart="App.selectQuality('DL-320k', event)">MP3 - 320kbps</button>
+                        <p class="text-[9px] text-zinc-600 px-3 font-black uppercase tracking-widest py-1 mt-2">Video (MP4)</p>
+                        <button class="${itemClass}" onclick="App.selectQuality('DL-1080p', event)" ontouchstart="App.selectQuality('DL-1080p', event)">MP4 - 1080p</button>`;
+                } else {
+                    html = `
+                        <button onclick="App.setMenuView('audio', event)" ontouchstart="App.setMenuView('audio', event)" class="${itemClass}"><i data-lucide="music" class="w-4 h-4"></i> Audio Only <i data-lucide="chevron-right" class="w-3 h-3 ml-auto opacity-30"></i></button>
+                        <button onclick="App.setMenuView('video', event)" ontouchstart="App.setMenuView('video', event)" class="${itemClass} text-white"><i data-lucide="video" class="w-4 h-4"></i> Watch Video <i data-lucide="chevron-right" class="w-3 h-3 ml-auto opacity-30"></i></button>
+                        <div class="h-px bg-white/10 my-1"></div>
+                        <button onclick="App.setMenuView('download', event)" ontouchstart="App.setMenuView('download', event)" class="${itemClass}"><i data-lucide="download" class="w-4 h-4"></i> Download <i data-lucide="chevron-right" class="w-3 h-3 ml-auto opacity-30"></i></button>`;
+                }
+                container.innerHTML = html;
+                lucide.createIcons();
+            },
+
+            selectQuality(q, event) {
+                if (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                this.Gestures.showFeedback('check');
+                this.state.isOptionsMenuOpen = false;
+                this.updateUI();
+            },
+
+            toggleFullscreen(event) {
+                if(event) event.stopPropagation();
+                this.state.isFullscreen = !this.state.isFullscreen;
+                const frame = document.getElementById('video-frame');
+                frame.classList.toggle('fullscreen-active', this.state.isFullscreen);
+                document.getElementById('fs-icon').setAttribute('data-lucide', this.state.isFullscreen ? 'minimize' : 'maximize');
+                lucide.createIcons();
+            },
+
+            setView(view) {
+                this.state.currentView = view;
+                const container = document.getElementById('view-container');
+                if (view === 'home') {
+                    container.innerHTML = `<h2 class="text-4xl font-black tracking-tighter mb-8 italic">FOR YOU</h2>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="aspect-[4/5] bg-zinc-900 rounded-[2.5rem] border border-white/5 p-6 flex flex-col justify-end group active:scale-95 transition-transform" onclick="App.playTrack('1', 'Midnight City', 'M83')">
+                                <p class="text-xs font-bold text-white mb-1">TRENDING</p><p class="font-bold text-lg leading-tight">Midnight City</p>
+                            </div>
+                            <div class="aspect-[4/5] bg-zinc-900 rounded-[2.5rem] border border-white/5 p-6 flex flex-col justify-end opacity-50 active:scale-95 transition-transform" onclick="App.playTrack('2', 'Starboy', 'The Weeknd')">
+                                <p class="font-bold text-lg leading-tight">Starboy</p>
+                            </div>
+                        </div>`;
+                } else if (view === 'search') { this.Search.render(container); } 
+                else if (view === 'library') { this.Library.render(container); }
+                else if (view === 'settings') { this.Settings.render(container); }
+                this.updateUI();
+            },
+
+            updateUI() {
+                const disk = document.getElementById('disk-art');
+                if (this.state.isPlaying) disk.classList.remove('paused'); else disk.classList.add('paused');
+                document.getElementById('full-play-icon').setAttribute('data-lucide', this.state.isPlaying ? 'pause' : 'play');
+                
+                ['home', 'search', 'library'].forEach(v => {
+                    const el = document.getElementById(`nav-${v}`);
+                    if (el) el.className = (v === this.state.currentView) ? 'flex-1 flex flex-col items-center justify-center gap-0.5 active-nav-item tap-highlight-none' : 'flex-1 flex flex-col items-center justify-center gap-0.5 inactive-nav-item tap-highlight-none';
+                });
+
+                const menu = document.getElementById('options-menu');
+                menu.classList.toggle('opacity-0', !this.state.isOptionsMenuOpen);
+                menu.classList.toggle('pointer-events-none', !this.state.isOptionsMenuOpen);
+                menu.classList.toggle('scale-95', !this.state.isOptionsMenuOpen);
+                if(this.state.isOptionsMenuOpen) this.renderOptionsMenu();
+                
+                this.Library.updateLikeButton();
+                lucide.createIcons();
+            },
+
+            Library: {
+                songs: [],
+                init() { const s = localStorage.getItem('s_lib'); if(s) this.songs = JSON.parse(s); },
+                toggleLike(event) {
+                    if (event) event.stopPropagation();
+                    const t = App.state.currentTrack;
+                    const i = this.songs.findIndex(s => s.id === t.id);
+                    if(i > -1) this.songs.splice(i, 1); else this.songs.push(t);
+                    localStorage.setItem('s_lib', JSON.stringify(this.songs));
+                    App.updateUI();
+                },
+                updateLikeButton() {
+                    const icon = document.getElementById('like-icon');
+                    const isLiked = this.songs.some(s => s.id === App.state.currentTrack.id);
+                    icon.setAttribute('data-lucide', isLiked ? 'check' : 'plus');
+                    icon.className = isLiked ? 'w-5 h-5 text-white' : 'w-5 h-5 text-zinc-300';
+                },
+                render(container) {
+                    let html = `<h2 class="text-4xl font-black tracking-tighter mb-8 italic">LIBRARY</h2>`;
+                    if(this.songs.length === 0) html += `<p class="text-center mt-20 opacity-40">No liked tracks</p>`;
+                    else {
+                        this.songs.forEach(s => {
+                            html += `<div class="glass-pill p-4 rounded-2xl flex items-center gap-4 mb-3" onclick="App.playTrack('${s.id}', '${s.title}', '${s.artist}')">
+                                <div class="w-10 h-10 bg-zinc-800 rounded-full flex items-center justify-center"><i data-lucide="play" class="w-4 h-4 ml-0.5"></i></div>
+                                <div><p class="font-bold text-sm">${s.title}</p><p class="text-xs text-zinc-500">${s.artist}</p></div>
+                            </div>`;
+                        });
+                    }
+                    container.innerHTML = html;
+                    lucide.createIcons();
+                }
+            },
+
+            Search: {
+                render(container) {
+                    container.innerHTML = `<h2 class="text-4xl font-black tracking-tighter mb-6 italic">SEARCH</h2>
+                        <div class="relative mb-8">
+                            <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500"></i>
+                            <input type="text" placeholder="Search..." class="w-full bg-zinc-900 border border-white/10 rounded-2xl py-4 pl-12 text-white outline-none focus:border-white" onkeypress="if(event.key==='Enter') App.Search.run(this.value)">
+                        </div><div id="search-results"></div>`;
+                    lucide.createIcons();
+                },
+                run(q) {
+                    const r = document.getElementById('search-results');
+                    r.innerHTML = `<div class="flex justify-center p-10"><i data-lucide="loader-2" class="animate-spin text-white"></i></div>`;
+                    lucide.createIcons();
+
+                    fetch(`http://localhost:8765/stream?q=${encodeURIComponent(q)}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.error) {
+                                r.innerHTML = `<p class="text-red-400 text-center">${data.error}</p>`;
+                                return;
+                            }
+                            // Cache metadata, store proxy URL
+                            App.Search._lastResult = data;
+                            r.innerHTML = `
+                                <div class="glass-pill p-4 rounded-2xl flex items-center gap-4"
+                                     onclick="App.Search.play()">
+                                    <img src="${data.thumbnail}" class="w-10 h-10 rounded-full object-cover">
+                                    <div>
+                                        <p class="font-bold text-sm">${data.title}</p>
+                                        <p class="text-xs text-zinc-500">${data.artist}</p>
+                                    </div>
+                                    <i data-lucide="play" class="w-5 h-5 ml-auto text-white"></i>
+                                </div>`;
+                            lucide.createIcons();
+                        })
+                        .catch(() => {
+                            r.innerHTML = `<p class="text-red-400 text-center">Backend offline</p>`;
+                        });
+                },
+
+                play() {
+                    const d = App.Search._lastResult;
+                    if (!d) return;
+                    const proxyUrl = `http://localhost:8765/proxy?q=${encodeURIComponent(d.title)}`;
+                    App.playTrack(d.id, d.title, d.artist, proxyUrl);
+                }
+            },
+
+            Settings: {
+                updateSetting(key, val) {
+                    App.state.settings[key] = val;
+                    App.Gestures.showFeedback('check');
+                    this.render(document.getElementById('view-container'));
+                },
+                render(container) {
+                    const s = App.state.settings;
+                    container.innerHTML = `
+                        <h2 class="text-4xl font-black tracking-tighter mb-8 italic">SETTINGS</h2>
+                        
+                        <div class="space-y-6 pb-20">
+                            <!-- Streaming Section -->
+                            <div class="space-y-3">
+                                <p class="text-[10px] uppercase tracking-widest text-zinc-600 font-black px-1">Playback & Quality</p>
+                                <div class="glass-pill p-5 rounded-[2rem] flex justify-between items-center">
+                                    <div><p class="font-bold">High Quality Audio</p><p class="text-xs text-zinc-500">320kbps Lossless output</p></div>
+                                    <label class="switch"><input type="checkbox" ${s.highQuality ? 'checked' : ''} onchange="App.Settings.updateSetting('highQuality', this.checked)"><span class="slider"></span></label>
+                                </div>
+                                <div class="glass-pill p-5 rounded-[2rem] flex justify-between items-center">
+                                    <div><p class="font-bold">Data Saver</p><p class="text-xs text-zinc-500">Optimize for mobile networks</p></div>
+                                    <label class="switch"><input type="checkbox" ${s.dataSaver ? 'checked' : ''} onchange="App.Settings.updateSetting('dataSaver', this.checked)"><span class="slider"></span></label>
+                                </div>
+                            </div>
+
+                            <!-- Convenience Section -->
+                            <div class="space-y-3">
+                                <p class="text-[10px] uppercase tracking-widest text-zinc-600 font-black px-1">Timer & Auto-stop</p>
+                                <div class="glass-pill p-5 rounded-[2rem]">
+                                    <p class="font-bold mb-3">Sleep Timer</p>
+                                    <div class="flex gap-2">
+                                        ${['Off', '15m', '30m', '60m'].map((label, i) => `
+                                            <button onclick="App.Settings.updateSetting('sleepTimer', ${i})" class="flex-1 py-3 rounded-2xl text-[10px] font-black uppercase transition-all ${s.sleepTimer === i ? 'bg-white text-black shadow-lg shadow-white/20' : 'bg-white/5 text-zinc-400'}">
+                                                ${label}
+                                            </button>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Storage Section -->
+                            <div class="space-y-3">
+                                <p class="text-[10px] uppercase tracking-widest text-zinc-600 font-black px-1">Storage</p>
+                                <div class="glass-pill p-5 rounded-[2rem] flex justify-between items-center" onclick="App.Gestures.showFeedback('folder')">
+                                    <div><p class="font-bold">Download Location</p><p class="text-xs text-zinc-500">/Internal Storage/Sansy/Music</p></div>
+                                    <i data-lucide="chevron-right" class="w-5 h-5 text-zinc-600"></i>
+                                </div>
+                                <div class="glass-pill p-5 rounded-[2rem] flex justify-between items-center text-red-500" onclick="localStorage.clear(); location.reload();">
+                                    <div><p class="font-bold">Clear Cache</p><p class="text-xs opacity-50">Free up 124MB of space</p></div>
+                                    <i data-lucide="trash-2" class="w-5 h-5"></i>
+                                </div>
+                            </div>
+
+                            <!-- About Section -->
+                            <div class="space-y-3">
+                                <p class="text-[10px] uppercase tracking-widest text-zinc-600 font-black px-1">About</p>
+                                <div class="glass-pill p-6 rounded-[2rem] text-center space-y-2">
+                                    <p class="text-xl font-black italic tracking-tighter text-white">SANSY v2.4.0</p>
+                                    <p class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Built for audiophiles</p>
+                                    <div class="flex justify-center gap-4 pt-2">
+                                        <i data-lucide="github" class="w-4 h-4 text-zinc-400"></i>
+                                        <i data-lucide="twitter" class="w-4 h-4 text-zinc-400"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>`;
+                    lucide.createIcons();
+                }
+            },
+
+            Gestures: {
+                startY: 0, isDragging: false,
+                init() {
+                    const p = document.getElementById('full-player');
+                    p.addEventListener('touchstart', (e) => {
+                        if(e.target.closest('#options-menu') || e.target.closest('button') || e.target.closest('input')) return;
+                        this.startY = e.touches[0].clientY;
+                        this.isDragging = true;
+                        p.style.transition = 'none';
+                    }, {passive:true});
+                    
+                    p.addEventListener('touchmove', (e) => {
+                        if(!this.isDragging) return;
+                        const d = e.touches[0].clientY - this.startY;
+                        if(d > 0) p.style.transform = `translateY(${d}px)`;
+                    }, {passive:true});
+                    
+                    p.addEventListener('touchend', (e) => {
+                        if(!this.isDragging) return;
+                        this.isDragging = false;
+                        p.style.transition = '';
+                        const d = e.changedTouches[0].clientY - this.startY;
+                        if(d > 150) App.toggleFullPlayer(); else p.style.transform = '';
+                    }, {passive:true});
+                },
+                showFeedback(i) {
+                    const f = document.getElementById('gesture-feedback');
+                    document.getElementById('gesture-icon').setAttribute('data-lucide', i);
+                    lucide.createIcons();
+                    f.classList.remove('opacity-0');
+                    setTimeout(() => f.classList.add('opacity-0'), 600);
+                }
+            }
+        };
+
+        window.onload = () => App.init();
+    </script>
+</body>
+</html>
