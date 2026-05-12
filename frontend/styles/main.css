@@ -1,0 +1,150 @@
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #000000;
+    color: #ffffff;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+    touch-action: manipulation;
+    width: 100vw;
+    height: 100vh;
+}
+
+.glass-pill {
+    background: rgba(15, 15, 20, 0.85);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+}
+
+.active-nav-item i {
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
+    color: #ffffff;
+}
+
+.active-nav-item span {
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+    color: #ffffff;
+}
+
+.inactive-nav-item {
+    color: #444444;
+}
+
+.sidebar-transition {
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.full-player-transition {
+    transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes rotate-disk {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.playing-disk {
+    animation: rotate-disk 8s linear infinite;
+}
+
+.playing-disk.paused {
+    animation-play-state: paused;
+}
+
+#content-area::-webkit-scrollbar {
+    width: 0px;
+}
+
+.video-container {
+    transition: all 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.video-container.fullscreen-active {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+    border-color: transparent;
+    z-index: 100;
+    background: #000;
+}
+
+.tap-highlight-none {
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+}
+
+/* Switch toggle */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 20px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #222;
+    transition: .4s;
+    border-radius: 20px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #ffffff;
+}
+
+input:checked + .slider:before {
+    transform: translateX(20px);
+    background-color: #000;
+}
+
+/* Progress bar — tall hit area, thin visual track */
+#progress-bar-wrap {
+    height: 20px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    touch-action: none;
+}
+
+#progress-track {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+#progress-fill {
+    height: 100%;
+    background: #ffffff;
+    width: 0%;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+    transition: width 0.3s linear;
+}
