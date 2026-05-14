@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sansy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000000;
+            color: #ffffff;
+            -webkit-font-smoothing: antialiased;
+            overflow: hidden;
+            touch-action: manipulation;
+            width: 100vw;
+            height: 100vh;
+        }
+        .glass-pill {
+            background: rgba(15, 15, 20, 0.85);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+        }
+        .active-nav-item i { filter: drop-shadow(0 0 8px rgba(255,255,255,0.6)); color: #ffffff; }
+        .active-nav-item span { text-shadow: 0 0 10px rgba(255,255,255,0.4); color: #ffffff; }
+        .inactive-nav-item { color: #444444; }
+        .sidebar-transition { transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+        .full-player-transition { transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1); }
+        @keyframes rotate-disk { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .playing-disk { animation: rotate-disk 8s linear infinite; }
+        .playing-disk.paused { animation-play-state: paused; }
+        #content-area::-webkit-scrollbar { width: 0px; }
+        .video-container { transition: all 0.4s cubic-bezier(0.32, 0.72, 0, 1); }
+        .video-container.fullscreen-active {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            border-radius: 0; border-color: transparent; z-index: 100; background: #000;
+        }
+        .tap-highlight-none { -webkit-tap-highlight-color: transparent; outline: none; }
+        .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #222; transition: .4s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #ffffff; }
+        input:checked + .slider:before { transform: translateX(20px); background-color: #000; }
+        #progress-bar-wrap {
+            height: 20px; display: flex; align-items: center; cursor: pointer; touch-action: none;
+        }
+        #progress-track {
+            width: 100%; height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden;
+        }
+        #progress-fill {
+            height: 100%; background: #ffffff; width: 0%; box-shadow: 0 0 10px rgba(255,255,255,0.3); transition: width 0.3s linear;
+        }
+    </style>
+</head>
+<body class="flex flex-col select-none">
+
+    <!-- Sidebar Overlay -->
+    <div id="sidebar-overlay" class="fixed inset-0 z-[80] bg-black/60 backdrop-blur-md opacity-0 pointer-events-none transition-opacity duration-500" onclick="App.toggleSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed top-0 left-0 bottom-0 w-72 bg-black/95 border-r border-white/5 z-[90] sidebar-transition -translate-x-full p-8 flex flex-col">
+        <button onclick="App.toggleSidebar()" class="tap-highlight-none mb-12 text-left">
+            <h1 class="text-2xl font-black tracking-tighter uppercase italic text-white">Sansy</h1>
+        </button>
+        <nav class="space-y-8">
+            <div class="space-y-4">
+                <p class="text-[10px] uppercase tracking-[0.2em] text-zinc-600 font-bold">Menu</p>
+                <button onclick="App.navigate('/library'); App.toggleSidebar();" class="flex items-center gap-4 text-zinc-100 w-full tap-highlight-none">
+                    <i data-lucide="heart" class="w-5 h-5 text-white"></i>
+                    <span class="font-semibold">Liked Songs</span>
+                </button>
+                <button onclick="App.navigate('/settings'); App.toggleSidebar();" class="flex items-center gap-4 text-zinc-400 w-full tap-highlight-none">
+                    <i data-lucide="settings" class="w-5 h-5"></i>
+                    <span>Settings</span>
+                </button>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- Full Player -->
+    <div id="full-player" class="fixed inset-0 z-[60] bg-black full-player-transition translate-y-full flex flex-col overflow-hidden">
+        <div class="p-6 flex items-center justify-between">
+            <button onclick="App.toggleFullPlayer()" class="p-2 glass-pill rounded-full tap-highlight-none">
+                <i data-lucide="chevron-down" class="w-6 h-6 text-white"></i>
+            </button>
+            <p class="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">Now Playing</p>
+            <div class="relative">
+                <button onclick="App.toggleOptionsMenu(event)" class="p-2 tap-highlight-none">
+                    <i data-lucide="more-vertical" class="w-5 h-5 text-white"></i>
+                </button>
+                <div id="options-menu" class="absolute right-0 top-12 glass-pill p-2 rounded-2xl w-56 opacity-0 pointer-events-none scale-95 z-[70] transition-all duration-200"
+                    onclick="event.stopPropagation()" ontouchstart="event.stopPropagation()">
+                    <div id="menu-content"></div>
+                </div>
+            </div>
+        </div>
+        <div class="flex-1 flex items-center justify-center px-6 relative">
+            <div id="video-frame" class="w-full aspect-video bg-zinc-900 rounded-2xl border border-white/10 overflow-hidden relative shadow-2xl flex items-center justify-center video-container">
+                <img id="player-thumb" src="" alt="" class="w-full h-full object-cover hidden">
+                <i id="player-placeholder" data-lucide="music" class="w-16 h-16 text-white/10"></i>
+                <button onclick="App.toggleFullscreen(event)" class="absolute bottom-3 left-3 p-2 bg-black/50 backdrop-blur-md rounded-lg text-white/70 tap-highlight-none">
+                    <i id="fs-icon" data-lucide="maximize" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+        <div class="pb-12 px-8 space-y-6">
+            <div class="flex items-center justify-between">
+                <div class="min-w-0 pr-4">
+                    <h2 class="text-2xl font-bold tracking-tight mb-1 truncate" id="player-title">No Track Selected</h2>
+                    <p class="text-zinc-400 text-sm truncate" id="player-artist">Tap a song to play</p>
+                </div>
+                <button onclick="App.Library.toggleLike(event)" class="p-3 bg-zinc-800/50 rounded-full border border-white/10 tap-highlight-none shrink-0">
+                    <i id="like-icon" data-lucide="plus" class="w-5 h-5 text-zinc-300"></i>
+                </button>
+            </div>
+            <div class="space-y-1">
+                <div id="progress-bar-wrap">
+                    <div id="progress-track">
+                        <div id="progress-fill"></div>
+                    </div>
+                </div>
+                <div class="flex justify-between text-[10px] font-medium text-zinc-500">
+                    <span id="time-current">0:00</span>
+                    <span id="time-total">0:00</span>
+                </div>
+            </div>
+            <div class="flex items-center justify-center gap-8 px-4">
+                <button class="text-white tap-highlight-none" onclick="App.Player.skip(-1); event.stopPropagation();">
+                    <i data-lucide="skip-back" class="w-8 h-8 fill-current"></i>
+                </button>
+                <button onclick="App.togglePlay(event)" class="h-20 w-20 bg-white text-black rounded-full flex items-center justify-center shadow-xl tap-highlight-none transition-transform active:scale-95">
+                    <i id="full-play-icon" data-lucide="pause" class="w-10 h-10 fill-current ml-1"></i>
+                </button>
+                <button class="text-white tap-highlight-none" onclick="App.Player.skip(1); event.stopPropagation();">
+                    <i data-lucide="skip-forward" class="w-8 h-8 fill-current"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main View -->
+    <main class="flex-1 flex flex-col relative overflow-hidden">
+        <header class="h-20 flex items-center justify-between px-6 z-10">
+            <button onclick="App.toggleSidebar()" class="tap-highlight-none">
+                <h1 class="text-2xl font-black tracking-tighter uppercase italic">Sansy</h1>
+            </button>
+        </header>
+        <div id="content-area" class="flex-1 w-full px-6 pb-32 overflow-y-auto">
+            {% block view %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Bottom Nav -->
+    <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3">
+        <button onclick="App.handleDiscClick(event)" class="h-12 w-12 glass-pill rounded-full flex items-center justify-center overflow-hidden border border-white/10 active:scale-90 transition-transform tap-highlight-none">
+            <div id="disk-art" class="playing-disk paused w-full h-full p-1.5 opacity-90">
+                <img id="disk-img" src="https://placehold.co/100x100/111/ffffff?text=♫" alt="Art" class="w-full h-full object-cover rounded-full">
+            </div>
+        </button>
+        <nav class="glass-pill px-2 py-1 rounded-full flex items-center justify-around w-60 h-12">
+            <a href="/home" id="nav-home" class="flex-1 flex flex-col items-center justify-center gap-0.5 tap-highlight-none {{ 'active-nav-item' if active_page == 'home' else 'inactive-nav-item' }}">
+                <i data-lucide="home" class="w-4 h-4"></i>
+                <span class="text-[9px] font-bold tracking-wider uppercase">Home</span>
+            </a>
+            <a href="/search" id="nav-search" class="flex-1 flex flex-col items-center justify-center gap-0.5 tap-highlight-none {{ 'active-nav-item' if active_page == 'search' else 'inactive-nav-item' }}">
+                <i data-lucide="search" class="w-4 h-4"></i>
+                <span class="text-[9px] font-bold tracking-wider uppercase">Search</span>
+            </a>
+            <a href="/library" id="nav-library" class="flex-1 flex flex-col items-center justify-center gap-0.5 tap-highlight-none {{ 'active-nav-item' if active_page == 'library' else 'inactive-nav-item' }}">
+                <i data-lucide="library" class="w-4 h-4"></i>
+                <span class="text-[9px] font-bold tracking-wider uppercase">Library</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Feedback Layer -->
+    <div id="gesture-feedback" class="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none opacity-0 transition-opacity">
+        <div class="bg-black/60 backdrop-blur-md p-6 rounded-full text-white">
+            <i id="gesture-icon" data-lucide="check" class="w-10 h-10"></i>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-28 left-1/2 -translate-x-1/2 glass-pill px-5 py-3 rounded-full text-xs font-bold z-[200] opacity-0 transition-opacity pointer-events-none whitespace-nowrap"></div>
+
+    <script src="{{ url_for('static', filename='js/core.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

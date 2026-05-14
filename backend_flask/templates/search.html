@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% set active_page = 'search' %}
+
+{% block view %}
+<div id="view-container">
+    <h2 class="text-4xl font-black tracking-tighter mb-6 italic">SEARCH</h2>
+    <div class="relative mb-6">
+        <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500"></i>
+        <input type="text" placeholder="Search songs, artists…"
+            class="w-full bg-zinc-900 border border-white/10 rounded-2xl py-4 pl-12 text-white outline-none focus:border-white"
+            onkeypress="if(event.key==='Enter') SearchPage.run(this.value)">
+    </div>
+    <div id="search-results"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/search.js') }}"></script>
+{% endblock %}
