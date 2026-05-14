@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% set active_page = 'home' %}
+
+{% block view %}
+<div id="view-container">
+    <h2 class="text-4xl font-black tracking-tighter mb-6 italic">FOR YOU</h2>
+    <div class="relative mb-6">
+        <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500"></i>
+        <input type="text" id="home-input" placeholder="What do you want to play?"
+            class="w-full bg-zinc-900 border border-white/10 rounded-2xl py-4 pl-12 text-white outline-none focus:border-white"
+            onkeypress="if(event.key==='Enter') HomePage.search(this.value)">
+    </div>
+    <div id="home-results">
+        <p class="text-[10px] uppercase tracking-widest text-zinc-600 font-black mb-3">Quick Play</p>
+        <div class="space-y-3">
+            <div class="glass-pill p-4 rounded-2xl flex items-center gap-4 active:scale-95 transition-transform"
+                 onclick="HomePage.search('Midnight City M83')">
+                <div class="w-10 h-10 bg-zinc-800 rounded-full flex items-center justify-center shrink-0">
+                    <i data-lucide="music" class="w-4 h-4 text-zinc-400"></i>
+                </div>
+                <p class="font-semibold text-sm">Midnight City M83</p>
+                <i data-lucide="play" class="w-4 h-4 ml-auto text-zinc-500"></i>
+            </div>
+            <div class="glass-pill p-4 rounded-2xl flex items-center gap-4 active:scale-95 transition-transform"
+                 onclick="HomePage.search('Starboy The Weeknd')">
+                <div class="w-10 h-10 bg-zinc-800 rounded-full flex items-center justify-center shrink-0">
+                    <i data-lucide="music" class="w-4 h-4 text-zinc-400"></i>
+                </div>
+                <p class="font-semibold text-sm">Starboy The Weeknd</p>
+                <i data-lucide="play" class="w-4 h-4 ml-auto text-zinc-500"></i>
+            </div>
+            <div class="glass-pill p-4 rounded-2xl flex items-center gap-4 active:scale-95 transition-transform"
+                 onclick="HomePage.search('Blinding Lights')">
+                <div class="w-10 h-10 bg-zinc-800 rounded-full flex items-center justify-center shrink-0">
+                    <i data-lucide="music" class="w-4 h-4 text-zinc-400"></i>
+                </div>
+                <p class="font-semibold text-sm">Blinding Lights</p>
+                <i data-lucide="play" class="w-4 h-4 ml-auto text-zinc-500"></i>
+            </div>
+            <div class="glass-pill p-4 rounded-2xl flex items-center gap-4 active:scale-95 transition-transform"
+                 onclick="HomePage.search('As It Was Harry Styles')">
+                <div class="w-10 h-10 bg-zinc-800 rounded-full flex items-center justify-center shrink-0">
+                    <i data-lucide="music" class="w-4 h-4 text-zinc-400"></i>
+                </div>
+                <p class="font-semibold text-sm">As It Was Harry Styles</p>
+                <i data-lucide="play" class="w-4 h-4 ml-auto text-zinc-500"></i>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/home.js') }}"></script>
+{% endblock %}
