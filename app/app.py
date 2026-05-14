@@ -41,7 +41,7 @@ def search_route():
     if not q:
         return jsonify({"error": "Missing query parameter 'q'"}), 400
     try:
-        limit = min(int(request.args.get("limit", 5)), 25)
+        limit = min(int(request.args.get("limit", 5)), 50)
     except ValueError:
         limit = 5
     try:

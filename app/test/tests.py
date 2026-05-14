@@ -43,12 +43,13 @@ def main():
         assert "service" in r.json()
     results.append(test_endpoint("API Root", "GET", "/", assert_fn=api_root_assert))
 
-    # 2. Search (valid)
+    # 2. Search (valid - testing larger limit for infinite scroll)
     def search_assert(r):
+        # We now want to support up to 50 results for the client-side paging plan
         assert len(r.json()["results"]) > 0
     results.append(test_endpoint(
-        "Search (valid)", "GET", "/search",
-        params={"q": "Rick Astley Never Gonna", "limit": 3},
+        "Search (valid - large limit)", "GET", "/search",
+        params={"q": "Rick Astley Never Gonna", "limit": 50},
         assert_fn=search_assert
     ))
 
@@ -112,7 +113,9 @@ def main():
     # Summary
     total = len(results)
     passed = sum(results)
-    print(f"\n{'─' * 30}\n{passed}/{total} tests passed")
+    print(f"
+{'─' * 30}
+{passed}/{total} tests passed")
     sys.exit(0 if passed == total else 1)
 
 

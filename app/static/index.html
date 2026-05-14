@@ -990,7 +990,15 @@
         // ── Home ───────────────────────────────────────────────────────────
         Home: {
             _suggestions: ['Midnight City M83','Starboy The Weeknd','Blinding Lights','As It Was Harry Styles','Levitating Dua Lipa','Heat Waves Glass Animals'],
+            _results: [],
+            _currentIndex: 0,
+            _observer: null,
+            _batchSize: 10,
             render(container) {
+                if (this._observer) {
+                    this._observer.disconnect();
+                    this._observer = null;
+                }
                 container.innerHTML = `
                     <h2 class="text-4xl font-black tracking-tighter mb-6 italic">FOR YOU</h2>
                     <div class="relative mb-6">
@@ -1017,25 +1025,72 @@
             },
             search(q) {
                 const r = document.getElementById('home-results');
+                if (this._observer) {
+                    this._observer.disconnect();
+                    this._observer = null;
+                }
+                this._results = [];
+                this._currentIndex = 0;
                 r.innerHTML = `<div class="flex justify-center p-10"><i data-lucide="loader-2" class="animate-spin text-white"></i></div>`;
                 Icons.refresh();
-                fetch(`${API}/search?q=${encodeURIComponent(q)}&limit=5`)
+                fetch(`${API}/search?q=${encodeURIComponent(q)}&limit=50`)
                     .then(res => res.json())
                     .then(data => {
                         if (data.error) { r.innerHTML = `<p class="text-red-400 text-center">${data.error}</p>`; return; }
                         const tracks = data.results || [];
                         if (!tracks.length) { r.innerHTML = `<p class="text-red-400 text-center">No results found</p>`; return; }
-                        r.innerHTML = tracks.map((track, index) => App.Search.resultRow(track, tracks, index)).join('');
-                        Icons.refresh();
+                        this._results = tracks;
+                        r.innerHTML = '';
+                        this.renderNextBatch();
                     })
                     .catch(() => { r.innerHTML = `<p class="text-red-400 text-center">Backend offline</p>`; });
+            },
+            renderNextBatch() {
+                const r = document.getElementById('home-results');
+                if (!r) return;
+                const sentinel = document.getElementById('home-scroll-sentinel');
+                if (sentinel) sentinel.remove();
+
+                const batch = this._results.slice(this._currentIndex, this._currentIndex + this._batchSize);
+                const startIndex = this._currentIndex;
+                this._currentIndex += batch.length;
+                r.insertAdjacentHTML('beforeend', batch.map((track, offset) => App.Search.resultRow(track, this._results, startIndex + offset)).join(''));
+
+                if (this._currentIndex < this._results.length) {
+                    r.insertAdjacentHTML('beforeend', '<div id="home-scroll-sentinel" class="h-12 flex items-center justify-center"><i data-lucide="loader-2" class="w-4 h-4 animate-spin text-zinc-500"></i></div>');
+                    this.observeSentinel();
+                }
+                Icons.refresh();
+            },
+            observeSentinel() {
+                const sentinel = document.getElementById('home-scroll-sentinel');
+                if (!sentinel) return;
+                if (this._observer) this._observer.disconnect();
+                this._observer = new IntersectionObserver((entries) => {
+                    if (entries.some(entry => entry.isIntersecting)) {
+                        this.renderNextBatch();
+                    }
+                }, {
+                    root: document.getElementById('content-area') || null,
+                    rootMargin: '240px 0px',
+                    threshold: 0.01
+                });
+                this._observer.observe(sentinel);
             }
         },
 
         // ── Search ─────────────────────────────────────────────────────────
         Search: {
             _lastResult: null,
+            _results: [],
+            _currentIndex: 0,
+            _observer: null,
+            _batchSize: 10,
             render(container) {
+                if (this._observer) {
+                    this._observer.disconnect();
+                    this._observer = null;
+                }
                 container.innerHTML = `
                     <h2 class="text-4xl font-black tracking-tighter mb-6 italic">SEARCH</h2>
                     <div class="relative mb-6">
@@ -1049,19 +1104,57 @@
             },
             run(q) {
                 const r = document.getElementById('search-results');
+                if (this._observer) {
+                    this._observer.disconnect();
+                    this._observer = null;
+                }
+                this._results = [];
+                this._currentIndex = 0;
                 r.innerHTML = `<div class="flex justify-center p-10"><i data-lucide="loader-2" class="animate-spin text-white"></i></div>`;
                 Icons.refresh();
-                fetch(`${API}/search?q=${encodeURIComponent(q)}&limit=10`)
+                fetch(`${API}/search?q=${encodeURIComponent(q)}&limit=50`)
                     .then(res => res.json())
                     .then(data => {
                         if (data.error) { r.innerHTML = `<p class="text-red-400 text-center">${data.error}</p>`; return; }
                         const tracks = data.results || [];
                         if (!tracks.length) { r.innerHTML = `<p class="text-red-400 text-center">No results found</p>`; return; }
-                        this._lastResults = tracks;
-                        r.innerHTML = tracks.map((track, index) => this.resultRow(track, tracks, index)).join('');
-                        Icons.refresh();
+                        this._results = tracks;
+                        r.innerHTML = '';
+                        this.renderNextBatch();
                     })
                     .catch(() => { r.innerHTML = `<p class="text-red-400 text-center">Backend offline</p>`; });
+            },
+            renderNextBatch() {
+                const r = document.getElementById('search-results');
+                if (!r) return;
+                const sentinel = document.getElementById('search-scroll-sentinel');
+                if (sentinel) sentinel.remove();
+
+                const batch = this._results.slice(this._currentIndex, this._currentIndex + this._batchSize);
+                const startIndex = this._currentIndex;
+                this._currentIndex += batch.length;
+                r.insertAdjacentHTML('beforeend', batch.map((track, offset) => this.resultRow(track, this._results, startIndex + offset)).join(''));
+
+                if (this._currentIndex < this._results.length) {
+                    r.insertAdjacentHTML('beforeend', '<div id="search-scroll-sentinel" class="h-12 flex items-center justify-center"><i data-lucide="loader-2" class="w-4 h-4 animate-spin text-zinc-500"></i></div>');
+                    this.observeSentinel();
+                }
+                Icons.refresh();
+            },
+            observeSentinel() {
+                const sentinel = document.getElementById('search-scroll-sentinel');
+                if (!sentinel) return;
+                if (this._observer) this._observer.disconnect();
+                this._observer = new IntersectionObserver((entries) => {
+                    if (entries.some(entry => entry.isIntersecting)) {
+                        this.renderNextBatch();
+                    }
+                }, {
+                    root: document.getElementById('content-area') || null,
+                    rootMargin: '240px 0px',
+                    threshold: 0.01
+                });
+                this._observer.observe(sentinel);
             },
             play() {
                 const d = this._lastResult;
