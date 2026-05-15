@@ -189,8 +189,7 @@ const App = {
             html =
                 `<button onclick="App.setMenuView('audio',event)" ontouchstart="App.setMenuView('audio',event)" class="${ic}"><i data-lucide="music" class="w-4 h-4"></i> Audio Only <i data-lucide="chevron-right" class="w-3 h-3 ml-auto opacity-30"></i></button>
                  <button onclick="App.setMenuView('video',event)" ontouchstart="App.setMenuView('video',event)" class="${ic}"><i data-lucide="video" class="w-4 h-4"></i> Watch Video <i data-lucide="chevron-right" class="w-3 h-3 ml-auto opacity-30"></i></button>
-                 <div class="h-px bg-white/10 my-1"></div>
-                 <button onclick="App.setMenuView('download',event)" ontouchstart="App.setMenuView('download',event)" class="${ic}"><i data-lucide="download" class="w-4 h-4"></i> Download <i data-lucide="chevron-right" class="w-3 h-3 ml-auto opacity-30"></i></button>`;
+                 <div class="h-px bg-white/10 my-1"></div>`;
         }
         container.innerHTML = html;
         lucide.createIcons();
@@ -202,24 +201,7 @@ const App = {
         if (!track?.title) { this.toast('No track loaded'); return; }
         this.state.isOptionsMenuOpen = false;
         this.updateUI();
-        if (!q.startsWith('DL-')) {
-            this.toast('Quality: ' + q);
-            return;
-        }
-        let fmt = 'mp3', quality = '320k';
-        if (q === 'DL-128k')  { fmt = 'mp3'; quality = '128k'; }
-        else if (q === 'DL-320k')  { fmt = 'mp3'; quality = '320k'; }
-        else if (q === 'DL-1080p') { fmt = 'mp4'; quality = '1080p'; }
-        else if (q === 'DL-720p')  { fmt = 'mp4'; quality = '720p'; }
-        this.toast('Downloading…');
-        fetch(`${API}/download?q=${encodeURIComponent(track.title)}&fmt=${fmt}&quality=${quality}`)
-            .then(r => r.json())
-            .then(data => {
-                if (data.error) { this.toast('Error: ' + data.error.slice(0, 60)); return; }
-                this.toast('Saved: ' + (data.filename || data.path.split('/').pop()));
-                this.Gestures.showFeedback('check');
-            })
-            .catch(() => this.toast('Backend offline'));
+        this.toast('Quality: ' + q);
     },
 
     toggleFullscreen(event) {
