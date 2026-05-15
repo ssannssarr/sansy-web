@@ -113,9 +113,7 @@ def main():
     # Summary
     total = len(results)
     passed = sum(results)
-    print(f"
-{'─' * 30}
-{passed}/{total} tests passed")
+    print(f"{'─' * 30}{passed}/{total} tests passed")
     sys.exit(0 if passed == total else 1)
 
 
