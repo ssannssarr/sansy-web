@@ -47,12 +47,12 @@ I will be gratefull if someone who have real app dev background contributes to c
 # "<u>Screenshots</u>":
 
 <p align="center">
-<img src="assets/Images/Home.jpg" width="200"/>
-<img src="assets/Images/Player.jpg" width="200"/>
-<img src="assets/Images/Queue.jpg" width="200"/>
-<img src="assets/Images/Search.jpg" width="200">
-<img src="assets/Images/Settings.jpg" width="200"/>
-<img src="assets/Images/SideBar.jpg" width="200"/>
+<img src="assets/Images/Home.jpg" width="150"/>
+<img src="assets/Images/Player.jpg" width="150"/>
+<img src="assets/Images/Queue.jpg" width="150"/>
+<img src="assets/Images/Search.jpg" width="150">
+<img src="assets/Images/Settings.jpg" width="150"/>
+<img src="assets/Images/SideBar.jpg" width="150"/>
 </p>
 
 
