@@ -1,6 +1,11 @@
+
+---
+
 <div align="center">
 
-# "<u>Sansy Web</u>"
+# "Sansy Web"
+
+---
 
 **A mobile-first music streaming web app powered by Flask and yt-dlp.**
 
@@ -13,7 +18,7 @@
 
 ---
 
-## "<u>About</u>" :
+## About:
 
 **Sansy Web** is an experimental music streaming web app.
 
@@ -27,9 +32,9 @@ I will be gratefull if someone who have real app dev background contributes to c
 
 ---
 
-## "<u>Features</u>":
+## Features:
 
-### <i>Current Features</i> :
+### <i>Current Features:</i> 
 
 - Search songs using YouTube / YouTube Music
 - Stream audio through Flask proxy
@@ -44,7 +49,7 @@ I will be gratefull if someone who have real app dev background contributes to c
 - API rate limiting
 
 ---
-# "<u>Screenshots</u>":
+# Screenshots:
 
 <p align="center">
 <img src="assets/Images/Home.jpg" width="150"/>
@@ -57,10 +62,9 @@ I will be gratefull if someone who have real app dev background contributes to c
 
 
 ---
-## '<u>Tech Stack</u>'
+## Tech Stack:
 
-### <i>Backend</i> :
-
+### <i>Backend:</i> 
 - Python
 - Flask
 - Flask-CORS
@@ -68,7 +72,7 @@ I will be gratefull if someone who have real app dev background contributes to c
 - yt-dlp
 - requests
 
-### <i>Frontend</i> :
+### <i>Frontend:</i>
 
 - HTML
 - CSS
@@ -79,7 +83,7 @@ I will be gratefull if someone who have real app dev background contributes to c
 
 ---
 
-## Project Structure
+## Project Structure:
 
 ```txt
 sansy-web/
@@ -122,9 +126,9 @@ sansy-web/
 ---
 
 
-## "<u>Backend API</u>"
+## Backend API:
 
-### <i>Root</i> :
+### <i>Root:</i>
 
 ```http
 GET /api
@@ -133,13 +137,13 @@ GET /api
 
 ---
 
-### <i>Search</i> :
+### <i>Search:</i>
 
 ```http
 GET /api/search?q=<query>&limit=<number>
 ```
 
-*Example* :
+*Example:* 
 
 ```http
 GET /api/search?q=starboy&limit=10
@@ -149,7 +153,7 @@ GET /api/search?q=starboy&limit=10
 
 ---
 
-### <i>Audio Proxy</i> :
+### <i>Audio Proxy:</i> 
 
 ```http
 GET /api/proxy/<video_id>
@@ -159,7 +163,7 @@ GET /api/proxy/<video_id>
 
 ---
 
-### <i>Related Tracks</i> :
+### <i>Related Tracks:</i> 
 
 ```http
 GET /api/related/<video_id>?limit=20
@@ -169,7 +173,7 @@ GET /api/related/<video_id>?limit=20
 
 ---
 
-### <i>Playlist</i> :
+### <i>Playlist:</i>
 
 ```http
 GET /api/playlist?url=<youtube_playlist_url>
@@ -182,7 +186,7 @@ Extracts tracks from a YouTube or YouTube Music playlist.
 
 
 
-## "<u>Installation</u>" :
+## Installation:
 
 Clone the repo :
 
@@ -233,7 +237,7 @@ http://YOUR_LOCAL_IP:8765
 
 ---
 
-## "<u>Termux Setup</u> :
+## Termux Setup:
 
 ```bash
 pkg update && pkg upgrade
@@ -254,11 +258,11 @@ http://localhost:8765
 
 ---
 
-## "<u>Current Status</u>" :
+## Current Status:
 
 Sansy Web is still a **prototype**.
 
-### <i>Working </i>:
+### <i>Working: </i>
 
 * Flask backend
 * Search API
@@ -270,7 +274,7 @@ Sansy Web is still a **prototype**.
 * Related tracks endpoint
 
 
-### <i>Needs Work</i> :
+### <i>Needs Work:</i>
 
 * Better playlist UI
 * Better queue handling
@@ -282,7 +286,7 @@ Sansy Web is still a **prototype**.
 
 ---
 
-## "<u>Important Notes</u>":
+## Important Notes:
 
 This project depends on `yt-dlp`.
 
@@ -296,7 +300,7 @@ YouTube changes may break extraction sometimes.
 
 ---
 
-## "<u>Contributing</u>":
+## Contributing:
 
 * **Contributions are welcomed.**
 
@@ -304,14 +308,15 @@ YouTube changes may break extraction sometimes.
 
 ---
 
-## "<u>Disclaimer</u> :
+## Disclaimer:
 
 Sansy Web is made for learning and experimentation.
 
 Respect YouTube’s terms of service and local laws when using or modifying this project.
 
 ---
-<h2 align="center"><i>"THANK YOU FOR READING UPTO HERE"</i></h2>
+<h3 align="center"><i>"THANK YOU FOR READING UPTO HERE"</i></h3>
 
+---
 
 
