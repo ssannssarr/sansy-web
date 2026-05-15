@@ -3,6 +3,8 @@
 
 <div align="center">
 
+
+
 # "Sansy Web"
 
 ---
@@ -315,7 +317,11 @@ Sansy Web is made for learning and experimentation.
 Respect YouTube’s terms of service and local laws when using or modifying this project.
 
 ---
-<h3 align="center"><i>"THANK YOU FOR READING UPTO HERE"</i></h3>
+<div align="center">
+
+### *"THANKS FOR SCROLLING TILL END"*
+
+**Made by <a href="https://github/ssannssarr">ssannssarr</a>**
 
 ---
 
