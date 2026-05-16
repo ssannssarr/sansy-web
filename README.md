@@ -26,11 +26,11 @@
 
 It uses a **Flask backend** to search and stream audio from YouTube using `yt-dlp`, while the frontend provides a clean mobile-first music player interface.
 
-The goal of the project is simple: To make a lighweight music app (but only web-app now though) that feels smooth, fun, and alive instead of overcomplicated.
+The goal of the project is simple: To make a lightweight music app (but only web-app now though) that feels smooth, fun, and alive instead of overcomplicated.
 
-Most of this work is buit using AI my role is to explore ideas and explain those ideas to AI to make things happen. 
+Most of this work is built using AI my role is to explore ideas and explain those ideas to AI to make things happen. 
 
-I will be gratefull if someone who have real app dev background contributes to convert this web-app prototype into real working app.
+I will be grateful if someone who has real app dev background contributes to convert this web-app prototype into real working app.
 
 ---
 
@@ -305,9 +305,9 @@ YouTube changes may break extraction sometimes.
 
 ## Contributing:
 
-* **Contributions are welcomed.**
+* **Contributions are welcome.**
 
-<b>**"**</b> *EVERYONE IS WELCOMED FOR CONTRIBUTION. BEFORE CONTRIBUTING PLEASE READ THE <a href="./assets/contribution.md">CONTRIBUTION GUIDE</A>.*<B>**"**</B>
+<b>**"**</b> *EVERYONE IS WELCOME FOR CONTRIBUTION. BEFORE CONTRIBUTING PLEASE READ THE <a href="./assets/contribution.md">CONTRIBUTION GUIDE</A>.*<B>**"**</B>
 
 ---
 
@@ -322,7 +322,7 @@ Respect YouTube’s terms of service and local laws when using or modifying this
 
 ### *"THANKS FOR SCROLLING TILL END"*
 
-**Made by <a href="https://github/ssannssarr">ssannssarr</a>**
+**Made by <a href="https://github.com/ssannssarr">ssannssarr</a>**
 
 ---
 
