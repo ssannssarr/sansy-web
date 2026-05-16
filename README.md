@@ -115,6 +115,7 @@ sansy-web/
  │   └──test/
  │        └tests.py  
  └─assets/
+     ├─ contribution.md
      └─Images/
         ├─Home.jpg
         ├─Player.jpg
