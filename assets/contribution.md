@@ -1,51 +1,55 @@
-````md id="9a6wqp"
-# Contributing to Sansy Web
 
-Thank you for contributing to Sansy Web.
+---
+<h1 align="center">"Contributing to Sansy"</h1>
+
+---
+
+### <div align="center">Thank you for contributing to Sansy Web.</div>
 
 This project is experimental and built mainly for learning, exploring ideas, and creating a music experience that feels smooth and alive. The codebase is not perfect, and it does not try to be a corporate-style project.
 
 You do not need to over-engineer things here.
 
-The main goal is:
-
+**The main goal is:**
+<i>
 - keep features working
 - keep the app lightweight
 - keep the UI feeling good
 - do not remove the soul and personality of the app
+</i>
 
 ---
 
-# Before You Start
+# Before You Start:
 
 Before working on something:
 
-1. Check existing issues
-2. Comment on the issue you want to work on
-3. Fork the repository
-4. Create a new branch
-5. Keep changes focused
+1. Check existing [issues](https://github.com/ssannssarr/sansy-web/issues).
+2. Comment on the issue you want to work on(to avoid double working on same issues).
+3. Fork the repository.
+4. Create a new branch.
+5. Keep changes focused.
 
 ---
 
-# Setup
+# Setup:
 
 Clone the repo:
 
-```bash id="vv7g9z"
+```bash 
 git clone https://github.com/YOUR_USERNAME/sansy-web.git
 cd sansy-web
 ````
 
 Create virtual environment:
 
-```bash id="qbxg7y"
+```bash 
 python -m venv venv
 ```
 
 Activate it:
 
-```bash id="11ccqx"
+```bash 
 # Linux / Termux
 source venv/bin/activate
 
@@ -55,27 +59,27 @@ venv\Scripts\activate
 
 Install dependencies:
 
-```bash id="lj7e9k"
+```bash 
 pip install -r requirements.txt
 ```
 
 Run the app:
 
-```bash id="ahp10i"
+```bash 
 python app/app.py
 ```
 
 Open:
 
-```txt id="b2e1k0"
+```http
 http://localhost:8765
 ```
 
 ---
 
-# Contribution Style
+# Contribution Style:
 
-A few simple rules:
+**A few simple rules:**
 
 * Keep things minimal
 * Avoid unnecessary dependencies
@@ -90,10 +94,10 @@ Just review what the AI changed before opening a PR.
 
 ---
 
-# Good Areas to Contribute
+# Good Areas to Contribute1:
 
 * UI improvements
-* Better mobile experience
+* Better mobile/desktop experience
 * Queue system
 * Playlist handling
 * Performance improvements
@@ -104,7 +108,7 @@ Just review what the AI changed before opening a PR.
 
 ---
 
-# Pull Requests
+# Pull Requests:
 
 Before opening a pull request:
 
@@ -115,7 +119,7 @@ Before opening a pull request:
 
 ---
 
-Thanks for helping improve Sansy Web ✨
+<h1 align="center"><i>Thanks for helping improve Sansy ✨</i></h1>
 
-```
-```
+---
+
