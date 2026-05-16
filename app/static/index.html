@@ -615,15 +615,22 @@
             this.state.isOptionsMenuOpen = false;
             this.updateUI();
 
+            if (q.startsWith('DL-')) {
+                const fmt = q.includes('1080p') || q.includes('720p') ? 'mp4' : 'mp3';
+                const quality = q.replace('DL-', '');
+                fetch(`${API}/download?q=${encodeURIComponent(track.title)}&fmt=${fmt}&quality=${encodeURIComponent(quality)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.error) { this.toast('Error: ' + data.error.slice(0, 60)); return; }
+                        this.toast('Saved: ' + (data.filename || data.path.split('/').pop()));
+                        this.Gestures.showFeedback('check');
+                    })
+                    .catch(() => this.toast('Backend offline'));
+                return;
+            }
+
             // Streaming quality change — just feedback for now
             this.toast('Quality: ' + q);
-            return;
-        },
-                    if (data.error) { this.toast('Error: ' + data.error.slice(0, 60)); return; }
-                    this.toast('Saved: ' + (data.filename || data.path.split('/').pop()));
-                    this.Gestures.showFeedback('check');
-                })
-                .catch(() => this.toast('Backend offline'));
         },
 
         setView(view) {
@@ -1279,4 +1286,3 @@
     </script>
 </body>
 </html> 
-
