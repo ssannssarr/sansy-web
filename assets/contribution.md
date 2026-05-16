@@ -94,7 +94,7 @@ Just review what the AI changed before opening a PR.
 
 ---
 
-# Good Areas to Contribute1:
+# Good Areas to Contribute:
 
 * UI improvements
 * Better mobile/desktop experience
