@@ -136,9 +136,13 @@ def download_route():
 
 # ── Frontend routes (optional local fallback) ────────────
 @app.route("/", defaults={"path": ""})
+@app.route("/sansy-web", defaults={"path": ""})
+@app.route("/sansy-web/<path:path>")
 @app.route("/<path:path>")
 def spa(path):
     if FRONTEND_DIST.exists():
+        if path.startswith("sansy-web/"):
+            path = path.removeprefix("sansy-web/")
         target = FRONTEND_DIST / path
         if path and target.exists() and target.is_file():
             return send_from_directory(FRONTEND_DIST, path)
