@@ -401,8 +401,9 @@
     <!-- Toast -->
     <div id="toast" class="fixed bottom-28 left-1/2 -translate-x-1/2 glass-pill px-5 py-3 rounded-full text-xs font-bold z-[200] opacity-0 transition-opacity pointer-events-none whitespace-nowrap"></div>
 
-    <script>
-    const API = `${window.location.origin}/api`;
+    <script type="module">
+    const API_BASE = (import.meta.env.VITE_API_URL || window.location.origin).replace(/\/$/, '');
+    const API = `${API_BASE}/api`;
     const Icons = {
         refresh() {
             if (window.lucide && typeof window.lucide.createIcons === 'function') {
@@ -1282,7 +1283,8 @@
         }
     };
 
-    window.onload = () => App.init();
+    window.App = App;
+    window.addEventListener('load', () => window.App.init());
     </script>
 </body>
 </html> 

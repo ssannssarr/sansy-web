@@ -6,7 +6,7 @@ import sys
 
 
 ROOT = Path(__file__).resolve().parents[2]
-APP_DIR = ROOT / "app"
+APP_DIR = ROOT / "backend"
 if str(APP_DIR) not in sys.path:
     sys.path.insert(0, str(APP_DIR))
 import app as app_module
@@ -148,4 +148,7 @@ def test_spa_root_page():
     response = client.get("/")
 
     assert response.status_code == 200
-    assert b"<!DOCTYPE html>" in response.data
+    assert (
+        b"<!DOCTYPE html>" in response.data
+        or b"Sansy Backend (Flask)" in response.data
+    )

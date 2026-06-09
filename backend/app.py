@@ -1,21 +1,23 @@
-import re
+import os
+from pathlib import Path
 import requests
 import urllib3
-from flask import Flask, request, jsonify, Response, stream_with_context, render_template, send_from_directory
+from flask import Flask, request, jsonify, Response, stream_with_context, send_from_directory
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from services.youtube import (
     search,
-    get_audio_generator,
     get_audio_url,
     get_related_tracks,
     extract_playlist,
-    get_home_sections,
     VIDEO_ID_RE
 )
 
-app = Flask(__name__, static_folder='static', template_folder='templates')
+BASE_DIR = Path(__file__).resolve().parent
+FRONTEND_DIST = BASE_DIR.parent / "frontend" / "dist"
+
+app = Flask(__name__)
 CORS(app)
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -132,14 +134,21 @@ def download_route():
     })
 
 
-# ── Frontend routes (SPA fallback) ───────────────────────
-# Serve the SPA index.html for any non-API path
+# ── Frontend routes (optional local fallback) ────────────
 @app.route("/", defaults={"path": ""})
 @app.route("/<path:path>")
 def spa(path):
-    # Let the frontend handle all routing
-    return send_from_directory(app.static_folder, "index.html")
+    if FRONTEND_DIST.exists():
+        target = FRONTEND_DIST / path
+        if path and target.exists() and target.is_file():
+            return send_from_directory(FRONTEND_DIST, path)
+        return send_from_directory(FRONTEND_DIST, "index.html")
+    return jsonify({
+        "service": "Sansy Backend (Flask)",
+        "frontend": "Build frontend/dist or run the Vite dev server separately.",
+    })
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8765, debug=False)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)
