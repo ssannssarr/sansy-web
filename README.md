@@ -1,329 +1,104 @@
+# Sansy Web
 
----
+Sansy Web is a mobile-first music streaming prototype. The frontend is a static Vite app that provides the player UI, and the backend is a Flask API that searches YouTube, proxies audio streams, returns related tracks, and handles playlist extraction.
 
-<div align="center">
+## Folder Structure
 
-
-
-# "Sansy Web"
-
----
-
-**A mobile-first music streaming web app powered by Flask and yt-dlp.**
-
-![Python](https://img.shields.io/badge/Python-111111?style=for-the-badge&logo=python)
-![Flask](https://img.shields.io/badge/Flask-ffffff?style=for-the-badge&logo=flask&logoColor=000000)
-![yt-dlp](https://img.shields.io/badge/yt--dlp-ff4d8d?style=for-the-badge)
-![Status](https://img.shields.io/badge/Status-Prototype-yellow?style=for-the-badge)
-
-</div>
-
----
-
-## About:
-
-**Sansy Web** is an experimental music streaming web app.
-
-It uses a **Flask backend** to search and stream audio from YouTube using `yt-dlp`, while the frontend provides a clean mobile-first music player interface.
-
-The goal of the project is simple: To make a lightweight music app (but only web-app now though) that feels smooth, fun, and alive instead of overcomplicated.
-
-Most of this work is built using AI my role is to explore ideas and explain those ideas to AI to make things happen. 
-
-I will be grateful if someone who has real app dev background contributes to convert this web-app prototype into real working app.
-
----
-
-## Features:
-
-### <i>Current Features:</i> 
-
-- Search songs using YouTube / YouTube Music
-- Stream audio through Flask proxy
-- Mobile-first black glass UI
-- Full-screen now-playing player
-- Play / pause controls
-- Skip forward / backward
-- Seekable progress bar
-- Liked songs using browser `localStorage`
-- Related tracks API
-- Simple file-based cache
-- API rate limiting
-
----
-# Screenshots:
-
-<p align="center">
-<img src="assets/Images/Home.jpg" width="150"/>
-<img src="assets/Images/Player.jpg" width="150"/>
-<img src="assets/Images/Queue.jpg" width="150"/>
-<img src="assets/Images/Search.jpg" width="150">
-<img src="assets/Images/Settings.jpg" width="150"/>
-<img src="assets/Images/SideBar.jpg" width="150"/>
-</p>
-
-
----
-## Tech Stack:
-
-### <i>Backend:</i> 
-- Python
-- Flask
-- Flask-CORS
-- Flask-Limiter
-- yt-dlp
-- requests
-
-### <i>Frontend:</i>
-
-- HTML
-- CSS
-- Tailwind CDN
-- Vanilla JavaScript
-- Lucide icons
-- Browser localStorage
-
----
-
-## Project Structure:
-
-```txt
+```text
 sansy-web/
- │ 
- ├───README.md
- ├───requirements.txt 
- ├───.vscode/
- │      └───settings.json     
- ├───app/
- │   ├─.gitignore
- │   ├─app.py  
- │   ├─services/
- │   │    ├─cache.py
- │   │    └─youtube.py      
- │   ├─static/
- │   │   ├─index.html  
- │   │   └─js/
- │   │     ├─core.js
- │   │     ├─home.js
- │   │     └─search.js        
- │   ├──templates/
- │   │   ├─base.html
- │   │   ├─home.html
- │   │   ├─library.html
- │   │   ├─search.html
- │   │   └─settings.html    
- │   └──test/
- │        └tests.py  
- └─assets/
-     ├─ contribution.md
-     └─Images/
-        ├─Home.jpg
-        ├─Player.jpg
-        ├─Queue.jpg
-        ├─Search.jpg
-        ├─Settings.jpg
-        └─SideBar.jpg
-
+├── backend/
+│   ├── app.py
+│   ├── requirements.txt
+│   ├── services/
+│   └── tests/
+├── frontend/
+│   ├── .env.example
+│   ├── index.html
+│   ├── package.json
+│   ├── vite.config.js
+│   └── legacy/
+├── assets/
+├── README.md
+└── .gitignore
 ```
 
----
+`frontend/legacy/` preserves the older Flask template-based UI files that are no longer part of the active deploy path.
 
+## Local Development
 
-## Backend API:
-
-### <i>Root:</i>
-
-```http
-GET /api
-```
-* Returns backend info.
-
----
-
-### <i>Search:</i>
-
-```http
-GET /api/search?q=<query>&limit=<number>
-```
-
-*Example:* 
-
-```http
-GET /api/search?q=starboy&limit=10
-```
-
-* Searches songs using `yt-dlp`.
-
----
-
-### <i>Audio Proxy:</i> 
-
-```http
-GET /api/proxy/<video_id>
-```
-
-* Streams audio for a valid YouTube video ID.
-
----
-
-### <i>Related Tracks:</i> 
-
-```http
-GET /api/related/<video_id>?limit=20
-```
-
-* Returns related tracks for a song.
-
----
-
-### <i>Playlist:</i>
-
-```http
-GET /api/playlist?url=<youtube_playlist_url>
-```
-
-Extracts tracks from a YouTube or YouTube Music playlist.
-
-
----
-
-
-
-## Installation:
-
-Clone the repo :
+Backend:
 
 ```bash
-git clone https://github.com/ssannssarr/sansy-web.git
-cd sansy-web
+cd backend
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python app.py
 ```
 
-Create virtual environment :
+Frontend:
 
 ```bash
-python -m venv venv 
+cd frontend
+cp .env.example .env
 ```
 
-Activate it :
+Set `VITE_API_URL=http://127.0.0.1:5000` in `frontend/.env`, then run:
 
 ```bash
-# Linux / macOS
-source venv/bin/activate
-
-# Windows
-venv\Scripts\activate
+npm install
+npm run dev
 ```
 
-Install dependencies :
+The frontend will call `${VITE_API_URL}/api`. If `frontend/dist` exists, `backend/app.py` can also serve the built frontend for local convenience.
+
+## Environment Variables
+
+Frontend:
+
+- `VITE_API_URL`: Base URL of the Flask backend, for example `https://your-backend-url.onrender.com`
+
+Backend:
+
+- `PORT`: Render injects this automatically. Local default is `5000`.
+
+## Deploy Frontend on GitHub Pages
+
+1. Set `VITE_API_URL` to your Render backend URL before building.
+2. Build the frontend:
+
+```bash
+cd frontend
+npm install
+npm run build
+```
+
+3. Deploy the contents of `frontend/dist/` to GitHub Pages for the `ssannssarr/sansy-web` repository.
+4. Keep `frontend/vite.config.js` set to `base: "/sansy-web/"` so the built asset paths match the repository Pages URL.
+
+## Deploy Backend on Render
+
+1. Create a new Render Web Service from this repository.
+2. Set the Root Directory to `backend`.
+3. Use this build command:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Run the app:
+4. Use this start command:
 
 ```bash
-python app/app.py
+gunicorn app:app
 ```
 
-Open:
+5. Render will provide `PORT`; `backend/app.py` already reads it and binds to `0.0.0.0`.
 
-```http
-http://localhost:8765
-```
+## Backend API
 
-For phone testing on same Wi-Fi:
-
-```http
-http://YOUR_LOCAL_IP:8765
-```
-
----
-
-## Termux Setup:
-
-```bash
-pkg update && pkg upgrade
-pkg install python git
-git clone https://github.com/ssannssarr/sansy-web.git
-cd sansy-web
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-python app/app.py
-```
-
-Then open :
-
-```http
-http://localhost:8765
-```
-
----
-
-## Current Status:
-
-Sansy Web is still a **prototype**.
-
-### <i>Working: </i>
-
-* Flask backend
-* Search API
-* Audio proxy
-* Web player UI
-* Liked songs
-* Settings UI
-* Basic caching
-* Related tracks endpoint
-
-
-### <i>Needs Work:</i>
-
-* Better playlist UI
-* Better queue handling
-* Proper frontend file separation
-* Remove duplicate inline JS if `core.js` is used
-* Add tests
-* Add deployment guide
-* Improve error handling
-
----
-
-## Important Notes:
-
-This project depends on `yt-dlp`.
-
-If search or streaming breaks, update it :
-
-```bash
-pip install -U yt-dlp
-```
-
-YouTube changes may break extraction sometimes.
-
----
-
-## Contributing:
-
-* **Contributions are welcome.**
-
-<b>**"**</b> *EVERYONE IS WELCOME FOR CONTRIBUTION. BEFORE CONTRIBUTING PLEASE READ THE <a href="./assets/contribution.md">CONTRIBUTION GUIDE</A>.*<B>**"**</B>
-
----
-
-## Disclaimer:
-
-Sansy Web is made for learning and experimentation.
-
-Respect YouTube’s terms of service and local laws when using or modifying this project.
-
----
-<div align="center">
-
-### *"THANKS FOR SCROLLING TILL END"*
-
-**Made by <a href="https://github.com/ssannssarr">ssannssarr</a>**
-
----
-
-
+- `GET /api` returns backend info.
+- `GET /api/search?q=<query>&limit=<number>` searches tracks.
+- `GET /api/proxy/<video_id>` proxies audio.
+- `GET /api/related/<video_id>?limit=20` returns related tracks.
+- `GET /api/playlist?url=<youtube_or_ytmusic_url>` extracts playlist items.
+- `GET /api/download?q=<query>&fmt=<format>&quality=<value>` returns download metadata.
