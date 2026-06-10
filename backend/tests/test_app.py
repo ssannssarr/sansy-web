@@ -35,6 +35,14 @@ def test_api_root():
     assert response.get_json()["service"] == "Sansy Backend (Flask)"
 
 
+def test_api_health():
+    client = app_module.app.test_client()
+    response = client.get("/api/health")
+
+    assert response.status_code == 200
+    assert response.get_json()["status"] == "ok"
+
+
 def test_search_valid(monkeypatch):
     client = app_module.app.test_client()
 

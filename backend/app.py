@@ -36,6 +36,11 @@ def api_root():
     return jsonify({"service": "Sansy Backend (Flask)", "version": "2.2.0"})
 
 
+@app.route("/api/health")
+def api_health():
+    return jsonify({"status": "ok"})
+
+
 @app.route("/api/search")
 @limiter.limit("30 per minute")
 def search_route():

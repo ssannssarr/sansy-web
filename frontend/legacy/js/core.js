@@ -32,6 +32,7 @@ const App = {
         this.Library.init();
         this.Gestures.init();
         this.Player.initSeek();
+        this.checkBackendStatus();
 
         window.addEventListener('click', (e) => {
             if (this.state.isOptionsMenuOpen &&
@@ -43,6 +44,15 @@ const App = {
         });
 
         lucide.createIcons();
+    },
+
+    async checkBackendStatus() {
+        try {
+            const resp = await fetch(`${API}/health`);
+            if (!resp.ok) throw new Error();
+        } catch (err) {
+            this.toast("Backend is waking up, please wait...");
+        }
     },
 
     navigate(path) {
@@ -126,7 +136,12 @@ const App = {
         if (this._audio.dataset.src !== url) {
             this._audio.dataset.src = url;
             this._audio.src = url;
-            this._audio.play().catch(e => console.warn('Playback blocked:', e));
+            this._audio.play().catch(e => {
+                console.error('Playback failed:', e);
+                this.toast("Playback failed: blocked by browser or backend unresponsive");
+                this.state.isPlaying = false;
+                this.updateUI();
+            });
             this.Player.startTracking();
         }
 
@@ -139,7 +154,12 @@ const App = {
         this.state.isPlaying = !this.state.isPlaying;
         if (this._audio) {
             if (this.state.isPlaying) {
-                this._audio.play();
+                this._audio.play().catch(e => {
+                    console.error('Playback failed:', e);
+                    this.toast("Playback failed: blocked by browser or unresponsive");
+                    this.state.isPlaying = false;
+                    this.updateUI();
+                });
                 this.Player.startTracking();
             } else {
                 this._audio.pause();
