@@ -93,7 +93,7 @@ def proxy_stream(video_id):
             direct_passthrough=True,
         )
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return Response(f"Proxy error: {str(e)}", status=500, mimetype="text/plain")
 
 
 @app.route("/api/related/<video_id>")

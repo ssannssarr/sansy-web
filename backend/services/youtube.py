@@ -5,6 +5,12 @@ import re
 import threading
 from services.cache import read_cache, write_cache, STREAM_CACHE_TTL
 
+try:
+    import yt_dlp
+    HAS_YT_DLP_LIB = True
+except ImportError:
+    HAS_YT_DLP_LIB = False
+
 SEMAPHORE = threading.Semaphore(3)
 VIDEO_ID_RE = re.compile(r'^[a-zA-Z0-9_-]{11}$')
 PLAYLIST_URL_RE = re.compile(r'^https://(www\.)?(youtube\.com|music\.youtube\.com)/.*')
@@ -15,41 +21,69 @@ def search(query: str, limit: int = 5) -> dict:
     if cached is not None:
         return {"query": query, "results": cached, "cached": True}
 
-    cmd = [
-        sys.executable, "-m", "yt_dlp",
-        f"ytsearch{limit}:{query}",
-        "--dump-json",
-        "--no-playlist",
-        "--flat-playlist",
-        "--no-warnings",
-        "--no-check-certificates",
-        "--extractor-args", "youtubetab:skip=authcheck",
-    ]
-
-    with SEMAPHORE:
-        try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
-            if result.returncode != 0:
-                raise RuntimeError(result.stderr.strip() or "Search failed")
-        except subprocess.TimeoutExpired:
-            raise RuntimeError("Search timed out")
-
     results = []
-    for line in result.stdout.strip().split("\n"):
-        if not line:
-            continue
+    if HAS_YT_DLP_LIB:
         try:
-            data = json.loads(line)
-            track = {
-                "id": data.get("id", ""),
-                "title": data.get("title", "Unknown"),
-                "artist": data.get("uploader") or data.get("channel") or "Unknown",
-                "duration": data.get("duration") or 0,
-                "thumbnail": data.get("thumbnail") or f"https://i.ytimg.com/vi/{data.get('id')}/hqdefault.jpg",
+            ydl_opts = {
+                'format': 'bestaudio/best',
+                'extract_flat': True,
+                'quiet': True,
+                'no_warnings': True,
+                'nocheckcertificate': True,
+                'extractor_args': {'youtubetab': ['skip=authcheck']},
             }
-            results.append(track)
-        except json.JSONDecodeError:
-            continue
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(f"ytsearch{limit}:{query}", download=False)
+                entries = info.get("entries", [])
+                for entry in entries:
+                    if not entry:
+                        continue
+                    track = {
+                        "id": entry.get("id", ""),
+                        "title": entry.get("title", "Unknown"),
+                        "artist": entry.get("uploader") or entry.get("channel") or "Unknown",
+                        "duration": entry.get("duration") or 0,
+                        "thumbnail": entry.get("thumbnail") or f"https://i.ytimg.com/vi/{entry.get('id')}/hqdefault.jpg",
+                    }
+                    results.append(track)
+        except Exception as e:
+            results = []
+
+    if not results:
+        cmd = [
+            sys.executable, "-m", "yt_dlp",
+            f"ytsearch{limit}:{query}",
+            "--dump-json",
+            "--no-playlist",
+            "--flat-playlist",
+            "--no-warnings",
+            "--no-check-certificates",
+            "--extractor-args", "youtubetab:skip=authcheck",
+        ]
+
+        with SEMAPHORE:
+            try:
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+                if result.returncode != 0:
+                    raise RuntimeError(result.stderr.strip() or "Search failed")
+            except subprocess.TimeoutExpired:
+                raise RuntimeError("Search timed out")
+
+        for line in result.stdout.strip().split("\n"):
+            if not line:
+                continue
+            try:
+                data = json.loads(line)
+                track = {
+                    "id": data.get("id", ""),
+                    "title": data.get("title", "Unknown"),
+                    "artist": data.get("uploader") or data.get("channel") or "Unknown",
+                    "duration": data.get("duration") or 0,
+                    "thumbnail": data.get("thumbnail") or f"https://i.ytimg.com/vi/{data.get('id')}/hqdefault.jpg",
+                }
+                results.append(track)
+            except json.JSONDecodeError:
+                continue
 
     if not results:
         raise RuntimeError("No results found")
@@ -101,27 +135,46 @@ def get_audio_url(video_id: str) -> str:
     if cached:
         return cached["url"]
 
-    url = f"https://www.youtube.com/watch?v={video_id}"
-    cmd = [
-        sys.executable, "-m", "yt_dlp",
-        url,
-        "--format", "bestaudio/best",
-        "--no-playlist",
-        "--no-warnings",
-        "--no-check-certificates",
-        "--get-url",
-        "--extractor-args", "youtubetab:skip=authcheck",
-    ]
-
-    with SEMAPHORE:
+    stream_url = ""
+    if HAS_YT_DLP_LIB:
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
-            if result.returncode != 0:
-                raise RuntimeError(result.stderr.strip() or "Stream URL extraction failed")
-        except subprocess.TimeoutExpired:
-            raise RuntimeError("Stream URL extraction timed out")
+            ydl_opts = {
+                'format': 'bestaudio/best',
+                'noplaylist': True,
+                'quiet': True,
+                'no_warnings': True,
+                'nocheckcertificate': True,
+                'extractor_args': {'youtubetab': ['skip=authcheck']},
+            }
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(f"https://www.youtube.com/watch?v={video_id}", download=False)
+                stream_url = info.get("url", "")
+        except Exception as e:
+            stream_url = ""
 
-    stream_url = next((line.strip() for line in result.stdout.splitlines() if line.strip()), "")
+    if not stream_url:
+        url = f"https://www.youtube.com/watch?v={video_id}"
+        cmd = [
+            sys.executable, "-m", "yt_dlp",
+            url,
+            "--format", "bestaudio/best",
+            "--no-playlist",
+            "--no-warnings",
+            "--no-check-certificates",
+            "--get-url",
+            "--extractor-args", "youtubetab:skip=authcheck",
+        ]
+
+        with SEMAPHORE:
+            try:
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+                if result.returncode != 0:
+                    raise RuntimeError(result.stderr.strip() or "Stream URL extraction failed")
+            except subprocess.TimeoutExpired:
+                raise RuntimeError("Stream URL extraction timed out")
+
+        stream_url = next((line.strip() for line in result.stdout.splitlines() if line.strip()), "")
+
     if not stream_url:
         raise RuntimeError("No stream URL found")
 

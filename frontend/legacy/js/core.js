@@ -130,6 +130,22 @@ const App = {
             this._audio = new Audio();
             this._audio.preload = 'auto';
             this._audio.addEventListener('ended', () => App.Player.skip(1));
+            this._audio.addEventListener('error', (e) => {
+                const err = this._audio.error;
+                console.error("Audio error details:", err);
+                let msg = "Playback failed: blocked by browser or backend unresponsive";
+                if (err) {
+                    switch (err.code) {
+                        case 1: msg = "Playback aborted by user"; break;
+                        case 2: msg = "Network error: check your connection"; break;
+                        case 3: msg = "Audio decoding failed"; break;
+                        case 4: msg = "Audio source not supported or backend error"; break;
+                    }
+                }
+                this.toast(msg);
+                this.state.isPlaying = false;
+                this.updateUI();
+            });
         }
 
         const url = streamUrl || `${API}/proxy/${id}`;
