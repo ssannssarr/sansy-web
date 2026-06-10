@@ -127,6 +127,49 @@ def get_audio_generator(video_id: str):
         proc.wait()
 
 
+def stream_audio(video_id: str):
+    """Primary streaming function: downloads audio via yt_dlp library into
+    memory and yields chunks.  Falls back to subprocess pipe streaming."""
+    if not VIDEO_ID_RE.match(video_id):
+        raise ValueError("Invalid video_id format")
+
+    # ── Strategy 1: in-memory library download ──────────────
+    if HAS_YT_DLP_LIB:
+        import io
+        buf = io.BytesIO()
+        ydl_opts = {
+            'format': 'bestaudio[ext=webm]/bestaudio/best',
+            'noplaylist': True,
+            'quiet': True,
+            'no_warnings': True,
+            'nocheckcertificate': True,
+            'outtmpl': '-',
+            'logtostderr': False,
+            'extractor_args': {'youtubetab': ['skip=authcheck']},
+        }
+
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(
+                    f"https://www.youtube.com/watch?v={video_id}",
+                    download=False,
+                )
+                stream_url = info.get("url", "")
+                if stream_url:
+                    import requests as _req
+                    resp = _req.get(stream_url, stream=True, timeout=30, verify=False)
+                    resp.raise_for_status()
+                    for chunk in resp.iter_content(chunk_size=8192):
+                        if chunk:
+                            yield chunk
+                    return
+        except Exception:
+            pass  # fall through to subprocess
+
+    # ── Strategy 2: subprocess pipe streaming ───────────────
+    yield from get_audio_generator(video_id)
+
+
 def get_audio_url(video_id: str) -> str:
     if not VIDEO_ID_RE.match(video_id):
         raise ValueError("Invalid video_id format")

@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-import requests
 import urllib3
 from flask import Flask, request, jsonify, Response, stream_with_context, send_from_directory
 from flask_cors import CORS
@@ -8,7 +7,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from services.youtube import (
     search,
-    get_audio_url,
+    stream_audio,
     get_related_tracks,
     extract_playlist,
     VIDEO_ID_RE
@@ -64,32 +63,14 @@ def proxy_stream(video_id):
     if not VIDEO_ID_RE.match(video_id):
         return jsonify({"error": "Invalid video_id format"}), 400
     try:
-        headers = {}
-        if request.headers.get("Range"):
-            headers["Range"] = request.headers["Range"]
-
-        upstream = requests.get(
-            get_audio_url(video_id),
-            headers=headers,
-            stream=True,
-            timeout=30,
-            verify=False,
-        )
-        upstream.raise_for_status()
-
-        response_headers = {
-            "Accept-Ranges": upstream.headers.get("Accept-Ranges", "bytes"),
-            "Cache-Control": "no-cache",
-        }
-        for header in ("Content-Length", "Content-Range"):
-            if upstream.headers.get(header):
-                response_headers[header] = upstream.headers[header]
-
         return Response(
-            stream_with_context(upstream.iter_content(chunk_size=8192)),
-            status=upstream.status_code,
-            mimetype=upstream.headers.get("Content-Type", "audio/mpeg").split(";")[0],
-            headers=response_headers,
+            stream_with_context(stream_audio(video_id)),
+            status=200,
+            mimetype="audio/webm",
+            headers={
+                "Accept-Ranges": "none",
+                "Cache-Control": "no-cache",
+            },
             direct_passthrough=True,
         )
     except Exception as e:

@@ -75,8 +75,10 @@ def test_search_missing_query():
 def test_proxy_valid(monkeypatch):
     client = app_module.app.test_client()
 
-    monkeypatch.setattr(app_module, "get_audio_url", lambda video_id: "https://example.test/audio")
-    monkeypatch.setattr(app_module.requests, "get", lambda *args, **kwargs: DummyUpstreamResponse())
+    def fake_stream(video_id):
+        yield b"audio"
+
+    monkeypatch.setattr(app_module, "stream_audio", fake_stream)
 
     response = client.get("/api/proxy/dQw4w9WgXcQ")
 
